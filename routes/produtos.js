@@ -61,28 +61,41 @@ try{
 }
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res, next) => {
 
-    const produtoId = parseInt(req.params.id);
-
-    const index = db.produtos.findIndex(p => p.id === produtoId);
-
-    if (index !== -1) {
-       
-        db.produtos[index] = { ...db.produtos[index], ...req.body };
-        res.json(db.produtos[index]);
-    } else {
-        res.status(404).json({ mensagem: 'Produto não encontrado.' });
+    try{
+        const {id} = req.params;
+        const {data, error} = await supabase
+        .from('produtos')
+        .update(req.body)
+        .eq('id', id)
+        .select()
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+            res.json(data[0]);
+        } else {
+            res.status(404).json({ mensagem: ' não encontrado' });
+        }
+    }catch (err) {
+        next(err);
     }
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res, next) => {
+    try{
+        const {id} = req.params;
+        const {error} = await supabase
+        .from('produtos')
+        .delete()
+        .eq('id', id);
 
-    const produtoId = parseInt(req.params.id);
-    
-    db.produtos = db.produtos.filter(p => p.id !== produtoId);
-
-    res.json({ mensagem: 'Produto deletado com sucesso!' });
+        if (error) throw error;
+        res.json({ mensagem: 'Produto deletado' });
+    }catch (err) {
+    next(err);
+  }
+  
 });
 
 module.exports = router;
